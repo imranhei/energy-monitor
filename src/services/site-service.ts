@@ -9,7 +9,9 @@ export type Site = {
   };
   name: string;
   short_code: string;
+  address: string;
   state: string;
+  postcode: string;
   floor_area_m2: string;
   site_type: string;
   nmi: string | null;
@@ -22,7 +24,7 @@ export type Site = {
   active: boolean;
 };
 
-export type CreateSitePayload = {
+export type SitePayload = {
   name: string;
   short_code: string;
   address: string;
@@ -43,10 +45,15 @@ type SiteListResponse = {
   status: "success";
   message: string;
   code: number;
+  count: number;
+  current_page: number;
+  last_page: number;
+  next: string | null;
+  previous: string | null;
   results: Site[];
 };
 
-type CreateSiteResponse = {
+type SiteResponse = {
   status: "success";
   message: string;
   code: number;
@@ -56,8 +63,13 @@ type CreateSiteResponse = {
 export const siteService = {
   list: () => apiKit.get<SiteListResponse>("/sites/"),
 
-  create: (payload: CreateSitePayload) =>
-    apiKit.post<CreateSiteResponse>("/sites/", payload),
+  detail: (id: number) => apiKit.get<SiteResponse>(`/sites/${id}/`),
 
-  delete: (id: number) => apiKit.delete(`/auth/sites/${id}/`),
+  create: (payload: SitePayload) =>
+    apiKit.post<SiteResponse>("/sites/", payload),
+
+  update: (id: number, payload: SitePayload) =>
+    apiKit.put<SiteResponse>(`/sites/${id}/`, payload),
+
+  delete: (id: number) => apiKit.delete(`/sites/${id}/`),
 };
