@@ -2,7 +2,8 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { store } from "@/store/store";
 import { logoutUser, setAccessToken } from "@/features/auth/authSlice";
 
-export const API_BASE_URL = "https://enbackend.ampecportal.com/api";
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3000/api";
 
 type ApiErrorResponse = {
   status: "error";
