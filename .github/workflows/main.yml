@@ -1,0 +1,56 @@
+name: Deploy Next.js to cPanel (Node App)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  web-deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 1) Upload source code to cPanel
+      - name: Upload via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: ${{ secrets.FTP_PORT }}
+          protocol: ftps
+          local-dir: ./
+          server-dir: /
+          timeout: 2400
+          exclude: |
+            **/.git/**
+            **/.github/**
+            **/.vscode/**
+            **/node_modules/**
+            **/.next/**
+            **/tmp/**
+            **/*.log
+            **/*.zip
+            **/.DS_Store
+            **/.env
+            **/.ftp-deploy-sync-state.json
+            **/yarn.lock
+
+      # 2) Build and restart on the server
+      - name: Build & restart (SSH)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd /home/ampecportal/energy.ampecportal.com
+            npm install
+            npm run build
+            mkdir -p tmp
+            touch tmp/restart.txt
