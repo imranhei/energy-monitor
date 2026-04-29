@@ -1,18 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { toast } from "sonner";
-import { userService } from "@/services/user-service";
-import { getApiErrorMessage } from "@/lib/api-kit";
-import { useAppSelector } from "@/store/hooks";
-import type { Role } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +16,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getApiErrorMessage } from "@/lib/api-kit";
+import { userService, type UserPayload } from "@/services/user-service";
+import { useAppSelector } from "@/store/hooks";
+import type { Role, User } from "@/types";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 type FormState = {
   full_name: string;
@@ -31,22 +30,31 @@ type FormState = {
   role: Role | "";
 };
 
-type Props = {
-  onCreated: () => void;
+const initialForm: FormState = {
+  full_name: "",
+  email: "",
+  password: "",
+  role: "",
 };
 
-export default function CreateUserModal({ onCreated }: Props) {
+type Props = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  user: User | null;
+  onSuccess: () => void;
+};
+
+export default function UserFormModal({
+  open,
+  onOpenChange,
+  user,
+  onSuccess,
+}: Props) {
+  const isEdit = Boolean(user);
   const currentUser = useAppSelector((state) => state.auth.user);
 
-  const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  const [form, setForm] = useState<FormState>({
-    full_name: "",
-    email: "",
-    password: "",
-    role: "",
-  });
+  const [form, setForm] = useState<FormState>(initialForm);
 
   const allowedRoles = useMemo(() => {
     if (currentUser?.role === "super_admin") {
@@ -68,9 +76,24 @@ export default function CreateUserModal({ onCreated }: Props) {
     return [];
   }, [currentUser]);
 
+  useEffect(() => {
+    if (!open) return;
+
+    if (user) {
+      setForm({
+        full_name: user.full_name || "",
+        email: user.email || "",
+        password: "",
+        role: user.role,
+      });
+    } else {
+      setForm(initialForm);
+    }
+  }, [open, user]);
+
   const handleChange = <K extends keyof FormState>(
     field: K,
-    value: FormState[K]
+    value: FormState[K],
   ) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
@@ -83,26 +106,37 @@ export default function CreateUserModal({ onCreated }: Props) {
       return;
     }
 
+    if (!isEdit && !form.password) {
+      toast.error("Password is required");
+      return;
+    }
+
     try {
       setLoading(true);
 
-      const { data } = await userService.create({
-        full_name: form.full_name,
+      const payload: UserPayload = {
         email: form.email,
-        password: form.password,
+        full_name: form.full_name,
         role: form.role,
-      });
+      };
 
-      toast.success(data.message || "User created successfully");
-      setOpen(false);
-      onCreated();
+      if (form.password) {
+        payload.password = form.password;
+      }
 
-      setForm({
-        full_name: "",
-        email: "",
-        password: "",
-        role: "",
-      });
+      const { data } =
+        isEdit && user
+          ? await userService.update(user.id, payload)
+          : await userService.create(payload as Required<UserPayload>);
+
+      toast.success(
+        data.message ||
+          (isEdit ? "User updated successfully" : "User created successfully"),
+      );
+
+      onOpenChange(false);
+      setForm(initialForm);
+      onSuccess();
     } catch (error) {
       toast.error(getApiErrorMessage(error));
     } finally {
@@ -111,20 +145,18 @@ export default function CreateUserModal({ onCreated }: Props) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
-        Create User
-      </DialogTrigger>
-
-      <DialogContent className="max-w-xl">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90vh] sm:max-w-3xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create User</DialogTitle>
+          <DialogTitle>{isEdit ? "Edit User" : "Create User"}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5" autoComplete="off">
           <div className="space-y-2">
             <Label>Full Name</Label>
             <Input
+              name="user_full_name"
+              autoComplete="off"
               value={form.full_name}
               onChange={(e) => handleChange("full_name", e.target.value)}
               placeholder="John Smith"
@@ -135,6 +167,8 @@ export default function CreateUserModal({ onCreated }: Props) {
             <Label>Email</Label>
             <Input
               type="email"
+              name="user_email"
+              autoComplete="new-email"
               value={form.email}
               onChange={(e) => handleChange("email", e.target.value)}
               placeholder="john@company.com"
@@ -142,19 +176,33 @@ export default function CreateUserModal({ onCreated }: Props) {
           </div>
 
           <div className="space-y-2">
-            <Label>Password</Label>
+            <Label>
+              Password{" "}
+              {isEdit && (
+                <span className="text-muted-foreground">(optional)</span>
+              )}
+            </Label>
             <Input
               type="password"
+              name="user_password"
+              autoComplete="new-password"
               value={form.password}
               onChange={(e) => handleChange("password", e.target.value)}
-              placeholder="Enter password"
+              placeholder={
+                isEdit
+                  ? "Leave blank to keep current password"
+                  : "Enter password"
+              }
             />
           </div>
 
           <div className="space-y-2">
             <Label>Role</Label>
-            <Select onValueChange={(value) => handleChange("role", value as Role)}>
-              <SelectTrigger>
+            <Select
+              value={form.role}
+              onValueChange={(value) => handleChange("role", value as Role)}
+            >
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
 
@@ -169,7 +217,13 @@ export default function CreateUserModal({ onCreated }: Props) {
           </div>
 
           <Button type="submit" disabled={loading} className="w-full">
-            {loading ? "Creating..." : "Create User"}
+            {loading
+              ? isEdit
+                ? "Updating..."
+                : "Creating..."
+              : isEdit
+                ? "Update User"
+                : "Create User"}
           </Button>
         </form>
       </DialogContent>

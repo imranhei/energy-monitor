@@ -50,9 +50,15 @@ export const navGroups: NavGroup[] = [
         permission: ["super_admin"],
       },
       {
-        label: "Users & Roles",
+        label: "Users",
         page: "users",
         href: "/users",
+        permission: ["super_admin", "admin"],
+      },
+      {
+        label: "Roles & Permissions",
+        page: "roles",
+        href: "/roles",
         permission: ["super_admin", "admin"],
       },
     ],

@@ -31,7 +31,7 @@ export default function TopNavbar({
       </div>
 
       <div className="flex items-center gap-3">
-        <Input className="w-72" placeholder="Search sites, NMIs, bills..." />
+        <Input className="max-w-72" placeholder="Search sites, NMIs, bills..." />
         <Button variant="outline">Export</Button>
         <Button>+ Upload bills</Button>
         <ThemeToggle />

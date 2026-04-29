@@ -1,7 +1,7 @@
 import { apiKit } from "@/lib/api-kit";
 import type { Tenant } from "@/types";
 
-export type CreateTenantPayload = {
+export type TenantPayload = {
   name: string;
   short_code: string;
   admin_email: string;
@@ -9,7 +9,7 @@ export type CreateTenantPayload = {
   admin_full_name: string;
 };
 
-type CreateTenantResponse = {
+type TenantResponse = {
   status: "success";
   message: string;
   code: number;
@@ -24,8 +24,13 @@ type TenantListResponse = {
 };
 
 export const tenantService = {
-  create: (payload: CreateTenantPayload) =>
-    apiKit.post<CreateTenantResponse>("/auth/tenants/", payload),
-
   list: () => apiKit.get<TenantListResponse>("/auth/tenants/list/"),
+
+  create: (payload: TenantPayload) =>
+    apiKit.post<TenantResponse>("/auth/tenants/", payload),
+
+  update: (id: number, payload: Partial<TenantPayload>) =>
+    apiKit.put<TenantResponse>(`/auth/tenants/${id}/`, payload),
+
+  delete: (id: number) => apiKit.delete(`/auth/tenants/${id}/`),
 };
