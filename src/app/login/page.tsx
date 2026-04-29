@@ -11,21 +11,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import type { User } from "@/types";
 
 type LoginResults = {
   refresh: string;
   access: string;
-  user: {
-    id: number;
-    email: string;
-    full_name: string;
-    role: string;
-    tenant: {
-      id: number;
-      name: string;
-      short_code: string;
-    };
-  };
+  user: User;
 };
 
 type LoginResponse = {
