@@ -12,7 +12,7 @@ export const navGroups: NavGroup[] = [
       {
         label: "Alerts",
         page: "alerts",
-        href: "/dashboard/alerts",
+        href: "/alerts",
         count: "7",
         alert: true,
       },
@@ -24,19 +24,19 @@ export const navGroups: NavGroup[] = [
       {
         label: "Bills",
         page: "bills",
-        href: "/dashboard/bills",
+        href: "/bills",
         count: "523",
       },
       {
         label: "Sites",
         page: "sites",
-        href: "/dashboard/sites",
+        href: "/sites",
         count: "41",
       },
       {
         label: "Consumption",
         page: "consumption",
-        href: "/dashboard/consumption",
+        href: "/consumption",
       },
     ],
   },
