@@ -7,11 +7,12 @@ import { Label } from "@/components/ui/label";
 import { setCredentials } from "@/features/auth/authSlice";
 import { apiKit, getApiErrorMessage } from "@/lib/api-kit";
 import { useAppDispatch } from "@/store/hooks";
+import type { User } from "@/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import { toast } from "sonner";
-import type { User } from "@/types";
 
 type LoginResults = {
   refresh: string;
@@ -33,6 +34,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     console.log("Submitting login form with:");
@@ -71,19 +73,36 @@ export default function LoginPage() {
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
             <div className="space-y-2">
               <Label>Email</Label>
-              <Input value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="new-email" type="email"
+                    name="tenant_admin_email" placeholder="admin@dj.com" required />
             </div>
 
             <div className="space-y-2">
               <Label>Password</Label>
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pr-10"
+                  autoComplete="new-password"
+                  name="tenant_admin_password"
+                  placeholder="••••••••"
+                  required
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                </button>
+              </div>
             </div>
 
             <Button className="w-full" disabled={loading} type="submit">

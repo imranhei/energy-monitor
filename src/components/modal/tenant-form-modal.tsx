@@ -13,6 +13,7 @@ import { getApiErrorMessage } from "@/lib/api-kit";
 import { tenantService, type TenantPayload } from "@/services/tenant-service";
 import type { Tenant } from "@/types";
 import { useEffect, useState } from "react";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import { toast } from "sonner";
 
 type FormState = TenantPayload;
@@ -41,6 +42,7 @@ export default function TenantFormModal({
   const isEdit = Boolean(tenant);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<FormState>(initialForm);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -158,16 +160,30 @@ export default function TenantFormModal({
 
                 <div className="space-y-2">
                   <Label>Admin Password</Label>
-                  <Input
-                    type="password"
-                    name="tenant_admin_password"
-                    autoComplete="new-password"
-                    value={form.admin_password}
-                    onChange={(e) =>
-                      handleChange("admin_password", e.target.value)
-                    }
-                    placeholder="Enter password"
-                  />
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      name="tenant_admin_password"
+                      autoComplete="new-password"
+                      value={form.admin_password}
+                      onChange={(e) =>
+                        handleChange("admin_password", e.target.value)
+                      }
+                      placeholder="Enter password"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? (
+                        <FiEyeOff size={16} />
+                      ) : (
+                        <FiEye size={16} />
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

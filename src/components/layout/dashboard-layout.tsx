@@ -23,11 +23,11 @@ export default function DashboardLayout({
         />
 
         <main
-          className={`pt-16 transition-all duration-300 ${
+          className={`pt-14 transition-all duration-300 ${
             isSidebarOpen ? "ml-64" : "ml-0"
           }`}
         >
-          <div className="mx-auto max-w-500 px-6 py-6">{children}</div>
+          <div className="mx-auto max-w-500 px-4 py-4">{children}</div>
         </main>
       </div>
     </AuthGuard>

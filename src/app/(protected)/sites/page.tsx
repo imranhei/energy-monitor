@@ -6,10 +6,16 @@ import DataTable, {
 } from "@/components/common/data-table";
 import SiteFormModal from "@/components/modal/site-form-modal";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { getApiErrorMessage } from "@/lib/api-kit";
 import { confirmAlert } from "@/lib/confirm-alert";
 import { siteService, type Site } from "@/services/site-service";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -73,7 +79,14 @@ export default function SitesPage() {
     {
       key: "name",
       header: "Name",
-      className: "font-medium",
+      render: (site) => (
+        <Link
+          href={`/sites/${site.id}`}
+          className="font-medium text-blue-600 hover:underline"
+        >
+          {site.name}
+        </Link>
+      ),
     },
     {
       key: "short_code",
@@ -139,31 +152,26 @@ export default function SitesPage() {
       key: "actions",
       header: "Actions",
       render: (site) => (
-        <div className="flex items-center gap-2">
-          <Button type="button" size="sm" variant="outline">
-            <Link href={`/sites/${site.id}`}>
-              <Eye className="size-4" />
-            </Link>
-          </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger className="inline-flex h-6 items-center justify-center rounded-md bg-background px-2 text-sm hover:bg-muted">
+            <MoreHorizontal className="size-4" />
+          </DropdownMenuTrigger>
 
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => handleEdit(site)}
-          >
-            <Pencil className="size-4" />
-          </Button>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => handleEdit(site)}>
+              <Pencil className="mr-2 size-4" />
+              Edit
+            </DropdownMenuItem>
 
-          <Button
-            type="button"
-            size="sm"
-            variant="destructive"
-            onClick={() => handleDelete(site.id)}
-          >
-            <Trash2 className="size-4" />
-          </Button>
-        </div>
+            <DropdownMenuItem
+              className="text-red-600"
+              onClick={() => handleDelete(site.id)}
+            >
+              <Trash2 className="mr-2 size-4" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       ),
     },
   ];
@@ -173,7 +181,7 @@ export default function SitesPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Sites</h1>
+            {/* <h1 className="text-3xl font-bold tracking-tight">Sites</h1> */}
             <p className="text-muted-foreground">
               Manage company sites and location data.
             </p>

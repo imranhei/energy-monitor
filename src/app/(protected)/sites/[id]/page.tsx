@@ -1,6 +1,7 @@
 "use client";
 
 import RoleGuard from "@/components/auth/role-guard";
+import SiteCatalogs from "@/components/sites/site-catalogs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getApiErrorMessage } from "@/lib/api-kit";
@@ -83,6 +84,16 @@ export default function SiteDetailPage() {
           </Card>
         ) : (
           <>
+            <Card>
+              <CardHeader>
+                <CardTitle>Catalogs</CardTitle>
+              </CardHeader>
+
+              <CardContent>
+                <SiteCatalogs siteId={site.id} />
+              </CardContent>
+            </Card>
+            
             <Card>
               <CardHeader>
                 <CardTitle>Overview</CardTitle>
