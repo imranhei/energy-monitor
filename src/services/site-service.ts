@@ -69,7 +69,7 @@ export const siteService = {
     apiKit.post<SiteResponse>("/sites/", payload),
 
   update: (id: number, payload: SitePayload) =>
-    apiKit.put<SiteResponse>(`/sites/${id}/`, payload),
+    apiKit.patch<SiteResponse>(`/sites/${id}/`, payload),
 
   delete: (id: number) => apiKit.delete(`/sites/${id}/`),
 };

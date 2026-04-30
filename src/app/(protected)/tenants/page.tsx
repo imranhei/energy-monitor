@@ -135,7 +135,7 @@ export default function TenantsPage() {
           data={tenants}
           loading={loading}
           emptyMessage="No tenants found."
-          minWidth="700px"
+          minWidth="500px"
           getRowKey={(tenant) => tenant.id}
         />
 

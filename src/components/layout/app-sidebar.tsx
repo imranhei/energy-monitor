@@ -52,7 +52,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
         isOpen ? "translate-x-0" : "-translate-x-full"
       }`}
     >
-      <div className="border-b p-5">
+      <div className="border-b p-3">
         <div className="text-xl font-bold">
           Ampec <em className="font-normal text-muted-foreground">Energy</em>
         </div>
@@ -61,7 +61,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
         </div>
       </div>
 
-      <nav className="flex-1 space-y-6 overflow-y-auto p-4">
+      <nav className="flex-1 space-y-4 overflow-y-auto p-3">
         {navGroups.map((group) => {
           const visibleItems = group.items.filter((item) => {
             if (!item.permission) return true;
@@ -74,7 +74,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
 
           return (
             <div key={group.label}>
-              <div className="mb-2 px-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 {group.label}
               </div>
 
@@ -88,7 +88,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
                     <Link
                       key={item.page}
                       href={item.href}
-                      className={`flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm transition hover:bg-muted ${
+                      className={`flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1 text-sm transition hover:bg-muted ${
                         isActive ? "bg-muted font-medium" : ""
                       }`}
                     >
@@ -122,7 +122,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
         })}
       </nav>
 
-      <div className="border-t p-4">
+      {/* <div className="border-t p-4">
         <div className="mb-4 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted font-semibold">
             {currentUser?.full_name
@@ -149,7 +149,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
           <FiLogOut className="mr-2" />
           Logout
         </Button>
-      </div>
+      </div> */}
     </aside>
   );
 }
