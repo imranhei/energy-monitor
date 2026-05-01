@@ -10,32 +10,35 @@ import { getApiErrorMessage } from "@/lib/api-kit";
 import { confirmAlert } from "@/lib/confirm-alert";
 import { tenantService } from "@/services/tenant-service";
 import type { Tenant } from "@/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 export default function TenantsPage() {
-  const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
 
-  const fetchTenants = async () => {
-    try {
-      setLoading(true);
-
+  const { data: tenants = [], isLoading } = useQuery({
+    queryKey: ["tenants"],
+    queryFn: async () => {
       const { data } = await tenantService.list();
-      setTenants(data.results);
-    } catch (error) {
-      toast.error(getApiErrorMessage(error));
-    } finally {
-      setLoading(false);
-    }
-  };
+      return data.results;
+    },
+  });
 
-  useEffect(() => {
-    fetchTenants();
-  }, []);
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => tenantService.delete(id),
+    onSuccess: () => {
+      toast.success("Tenant deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["tenants"] });
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error));
+    },
+  });
 
   const handleCreate = () => {
     setSelectedTenant(null);
@@ -49,72 +52,70 @@ export default function TenantsPage() {
 
   const handleDelete = async (id: number) => {
     const confirmed = await confirmAlert(
-    "Deactivate tenant?",
-    "This tenant will no longer be active."
-  );
+      "Deactivate tenant?",
+      "This tenant will no longer be active.",
+    );
 
-  if (!confirmed) return;
+    if (!confirmed) return;
 
-    try {
-      await tenantService.delete(id);
-      toast.success("Tenant deleted successfully");
-      fetchTenants();
-    } catch (error) {
-      toast.error(getApiErrorMessage(error));
-    }
+    deleteMutation.mutate(id);
   };
 
-  const columns: DataTableColumn<Tenant>[] = [
-    {
-      key: "name",
-      header: "Name",
-      className: "font-medium",
-    },
-    {
-      key: "short_code",
-      header: "Short Code",
-    },
-    {
-      key: "active",
-      header: "Status",
-      render: (tenant) => (
-        <span
-          className={`rounded-full px-2 py-1 text-xs ${
-            tenant.active
-              ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400"
-              : "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400"
-          }`}
-        >
-          {tenant.active ? "Active" : "Inactive"}
-        </span>
-      ),
-    },
-    {
-      key: "actions",
-      header: "Actions",
-      render: (tenant) => (
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => handleEdit(tenant)}
+  const columns: DataTableColumn<Tenant>[] = useMemo(
+    () => [
+      {
+        key: "name",
+        header: "Name",
+        className: "font-medium",
+      },
+      {
+        key: "short_code",
+        header: "Short Code",
+      },
+      {
+        key: "active",
+        header: "Status",
+        render: (tenant) => (
+          <span
+            className={`rounded-full px-2 py-1 text-xs ${
+              tenant.active
+                ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400"
+                : "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400"
+            }`}
           >
-            <Pencil className="size-4" />
-          </Button>
+            {tenant.active ? "Active" : "Inactive"}
+          </span>
+        ),
+      },
+      {
+        key: "actions",
+        header: "Actions",
+        render: (tenant) => (
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => handleEdit(tenant)}
+            >
+              <Pencil className="size-4" />
+            </Button>
 
-          <Button
-            type="button"
-            size="sm"
-            variant="destructive"
-            onClick={() => handleDelete(tenant.id)}
-          >
-            <Trash2 className="size-4" />
-          </Button>
-        </div>
-      ),
-    },
-  ];
+            <Button
+              type="button"
+              size="sm"
+              variant="destructive"
+              disabled={deleteMutation.isPending}
+              onClick={() => handleDelete(tenant.id)}
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [deleteMutation.isPending],
+  );
 
   return (
     <RoleGuard allowedRoles={["super_admin"]}>
@@ -133,7 +134,7 @@ export default function TenantsPage() {
         <DataTable
           columns={columns}
           data={tenants}
-          loading={loading}
+          loading={isLoading}
           emptyMessage="No tenants found."
           minWidth="500px"
           getRowKey={(tenant) => tenant.id}
@@ -143,7 +144,9 @@ export default function TenantsPage() {
           open={modalOpen}
           onOpenChange={setModalOpen}
           tenant={selectedTenant}
-          onSuccess={fetchTenants}
+          onSuccess={() =>
+            queryClient.invalidateQueries({ queryKey: ["tenants"] })
+          }
         />
       </div>
     </RoleGuard>

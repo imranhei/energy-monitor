@@ -10,8 +10,9 @@ import { getApiErrorMessage } from "@/lib/api-kit";
 import { confirmAlert } from "@/lib/confirm-alert";
 import { userService } from "@/services/user-service";
 import type { User } from "@/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 const formatRole = (role: string) =>
@@ -21,28 +22,29 @@ const formatRole = (role: string) =>
     .join(" ");
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-
+  const { data: users = [], isLoading } = useQuery({
+    queryKey: ["users"],
+    queryFn: async () => {
       const { data } = await userService.list();
-      setUsers(data.results);
-    } catch (error) {
-      toast.error(getApiErrorMessage(error));
-    } finally {
-      setLoading(false);
-    }
-  };
+      return data.results;
+    },
+  });
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => userService.delete(id),
+    onSuccess: ({ data }) => {
+      toast.success(data.message || "User deactivated successfully");
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error));
+    },
+  });
 
   const handleCreate = () => {
     setSelectedUser(null);
@@ -62,66 +64,64 @@ export default function UsersPage() {
 
     if (!confirmed) return;
 
-    try {
-      const { data } = await userService.delete(id);
-      toast.success(data.message || "User deactivated successfully");
-      fetchUsers();
-    } catch (error) {
-      toast.error(getApiErrorMessage(error));
-    }
+    deleteMutation.mutate(id);
   };
 
-  const columns: DataTableColumn<User>[] = [
-    {
-      key: "full_name",
-      header: "Name",
-      className: "font-medium",
-      render: (user) => user.full_name || "-",
-    },
-    {
-      key: "email",
-      header: "Email",
-    },
-    {
-      key: "role",
-      header: "Role",
-      render: (user) => (
-        <span className="rounded-full bg-muted px-2 py-1 text-xs">
-          {formatRole(user.role)}
-        </span>
-      ),
-    },
-    {
-      key: "tenant",
-      header: "Tenant",
-      render: (user) => user.tenant?.name || "-",
-    },
-    {
-      key: "actions",
-      header: "Actions",
-      render: (user) => (
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => handleEdit(user)}
-          >
-            <Pencil className="size-4" />
-          </Button>
+  const columns: DataTableColumn<User>[] = useMemo(
+    () => [
+      {
+        key: "full_name",
+        header: "Name",
+        className: "font-medium",
+        render: (user) => user.full_name || "-",
+      },
+      {
+        key: "email",
+        header: "Email",
+      },
+      {
+        key: "role",
+        header: "Role",
+        render: (user) => (
+          <span className="rounded-full bg-muted px-2 py-1 text-xs">
+            {formatRole(user.role)}
+          </span>
+        ),
+      },
+      {
+        key: "tenant",
+        header: "Tenant",
+        render: (user) => user.tenant?.name || "-",
+      },
+      {
+        key: "actions",
+        header: "Actions",
+        render: (user) => (
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => handleEdit(user)}
+            >
+              <Pencil className="size-4" />
+            </Button>
 
-          <Button
-            type="button"
-            size="sm"
-            variant="destructive"
-            onClick={() => handleDelete(user.id)}
-          >
-            <Trash2 className="size-4" />
-          </Button>
-        </div>
-      ),
-    },
-  ];
+            <Button
+              type="button"
+              size="sm"
+              variant="destructive"
+              disabled={deleteMutation.isPending}
+              onClick={() => handleDelete(user.id)}
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [deleteMutation.isPending],
+  );
 
   return (
     <RoleGuard allowedRoles={["super_admin", "admin"]}>
@@ -140,7 +140,7 @@ export default function UsersPage() {
         <DataTable
           columns={columns}
           data={users}
-          loading={loading}
+          loading={isLoading}
           emptyMessage="No users found."
           minWidth="900px"
           getRowKey={(user) => user.id}
@@ -150,7 +150,9 @@ export default function UsersPage() {
           open={modalOpen}
           onOpenChange={setModalOpen}
           user={selectedUser}
-          onSuccess={fetchUsers}
+          onSuccess={() =>
+            queryClient.invalidateQueries({ queryKey: ["users"] })
+          }
         />
       </div>
     </RoleGuard>

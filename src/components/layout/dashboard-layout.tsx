@@ -15,7 +15,10 @@ export default function DashboardLayout({
   return (
     <AuthGuard>
       <div className="min-h-screen bg-muted/30">
-        <AppSidebar isOpen={isSidebarOpen} />
+        <AppSidebar
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+        />
 
         <TopNavbar
           isSidebarOpen={isSidebarOpen}
@@ -24,7 +27,7 @@ export default function DashboardLayout({
 
         <main
           className={`pt-14 transition-all duration-300 ${
-            isSidebarOpen ? "ml-64" : "ml-0"
+            isSidebarOpen ? "lg:ml-64" : "lg:ml-0"
           }`}
         >
           <div className="mx-auto max-w-500 px-4 py-4">{children}</div>
