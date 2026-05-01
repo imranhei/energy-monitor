@@ -2,9 +2,16 @@
 
 import ThemeToggle from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { logoutUser } from "@/features/auth/authSlice";
 import { apiKit, getApiErrorMessage } from "@/lib/api-kit";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { Loader2 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { FiLogOut, FiMenu, FiSettings, FiShield } from "react-icons/fi";
@@ -41,6 +48,7 @@ export default function TopNavbar({
   const dispatch = useAppDispatch();
 
   const [profileOpen, setProfileOpen] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
 
   const user = useAppSelector((state) => state.auth.user);
   const refreshToken = useAppSelector((state) => state.auth.refreshToken);
@@ -60,6 +68,8 @@ export default function TopNavbar({
 
   const handleLogout = async () => {
     try {
+      setLogoutLoading(true);
+
       if (refreshToken) {
         const { data } = await apiKit.post<LogoutResponse>("/auth/logout/", {
           refresh: refreshToken,
@@ -72,13 +82,14 @@ export default function TopNavbar({
     } finally {
       dispatch(logoutUser());
       router.push("/login");
+      setLogoutLoading(false);
     }
   };
 
   return (
     <header
       className={`fixed right-0 top-0 z-30 flex h-14 items-center justify-between border-b bg-background px-4 transition-all duration-300 ${
-        isSidebarOpen ? "left-64" : "left-0"
+        isSidebarOpen ? "lg:left-64 left-0" : "left-0"
       }`}
     >
       <div className="flex items-center gap-4">
@@ -94,41 +105,51 @@ export default function TopNavbar({
       <div className="relative flex items-center gap-3">
         <ThemeToggle />
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setProfileOpen((prev) => !prev)}
-          className="rounded-full border bg-background hover:bg-muted"
-        >
-          {initials}
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            disabled={logoutLoading}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border bg-background text-sm font-medium hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {logoutLoading ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              initials
+            )}
+          </DropdownMenuTrigger>
 
-        {profileOpen && (
-          <div className="absolute right-0 top-12 w-72 overflow-hidden rounded-lg border bg-background shadow-lg">
+          <DropdownMenuContent align="end" className="w-72">
             <div className="border-b p-4">
               <p className="font-medium">{user?.full_name || "User"}</p>
               <p className="text-sm text-muted-foreground">{user?.email}</p>
             </div>
 
-            <button className="flex w-full items-center gap-3 px-4 py-3 text-sm hover:bg-muted">
-              <FiSettings />
+            <DropdownMenuItem>
+              <FiSettings className="mr-2" />
               Settings
-            </button>
+            </DropdownMenuItem>
 
-            <button className="flex w-full items-center gap-3 px-4 py-3 text-sm hover:bg-muted">
-              <FiShield />
+            <DropdownMenuItem>
+              <FiShield className="mr-2" />
               Security
-            </button>
+            </DropdownMenuItem>
 
-            <button
-              onClick={handleLogout}
-              className="flex w-full items-center gap-3 border-t px-4 py-3 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+            <DropdownMenuItem
+              disabled={logoutLoading}
+              onClick={(e) => {
+                e.preventDefault();
+                handleLogout();
+              }}
+              className="text-red-600 focus:text-red-600"
             >
-              <FiLogOut />
-              Log Out
-            </button>
-          </div>
-        )}
+              {logoutLoading ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : (
+                <FiLogOut className="mr-2" />
+              )}
+              {logoutLoading ? "Logging out..." : "Log Out"}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

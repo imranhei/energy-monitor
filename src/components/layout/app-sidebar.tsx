@@ -1,17 +1,13 @@
 "use client";
 
+import { navGroups } from "@/lib/constants";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { FiLogOut } from "react-icons/fi";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { apiKit, getApiErrorMessage } from "@/lib/api-kit";
-import { logoutUser } from "@/features/auth/authSlice";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { navGroups } from "@/lib/constants";
 
 type AppSidebarProps = {
   isOpen: boolean;
+  onClose: () => void;
 };
 
 type LogoutResponse = {
@@ -21,7 +17,7 @@ type LogoutResponse = {
   results: null;
 };
 
-export default function AppSidebar({ isOpen }: AppSidebarProps) {
+export default function AppSidebar({ isOpen, onClose }: AppSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useAppDispatch();
@@ -29,24 +25,31 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
   const currentUser = useAppSelector((state) => state.auth.user);
   const refreshToken = useAppSelector((state) => state.auth.refreshToken);
 
-  const handleLogout = async () => {
-    try {
-      if (refreshToken) {
-        const { data } = await apiKit.post<LogoutResponse>("/auth/logout/", {
-          refresh: refreshToken,
-        });
+  // const handleLogout = async () => {
+  //   try {
+  //     if (refreshToken) {
+  //       const { data } = await apiKit.post<LogoutResponse>("/auth/logout/", {
+  //         refresh: refreshToken,
+  //       });
 
-        toast.success(data.message || "Logout successful");
-      }
-    } catch (error) {
-      toast.error(getApiErrorMessage(error));
-    } finally {
-      dispatch(logoutUser());
-      router.push("/login");
-    }
-  };
+  //       toast.success(data.message || "Logout successful");
+  //     }
+  //   } catch (error) {
+  //     toast.error(getApiErrorMessage(error));
+  //   } finally {
+  //     dispatch(logoutUser());
+  //     router.push("/login");
+  //   }
+  // };
 
   return (
+    <>
+    {isOpen && (
+      <div
+        className="fixed inset-0 z-30 bg-black/40 lg:hidden"
+        onClick={onClose}
+      />
+    )}
     <aside
       className={`fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r bg-background transition-transform duration-300 ${
         isOpen ? "translate-x-0" : "-translate-x-full"
@@ -94,9 +97,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
                     >
                       <span
                         className={`h-2 w-2 rounded-full ${
-                          isActive
-                            ? "bg-primary"
-                            : "bg-muted-foreground/40"
+                          isActive ? "bg-primary" : "bg-muted-foreground/40"
                         }`}
                       />
 
@@ -124,32 +125,33 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
 
       {/* <div className="border-t p-4">
         <div className="mb-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted font-semibold">
-            {currentUser?.full_name
-              ? currentUser.full_name
-                  .split(" ")
-                  .map((item) => item[0])
-                  .join("")
-                  .slice(0, 2)
-                  .toUpperCase()
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted font-semibold">
+        {currentUser?.full_name
+        ? currentUser.full_name
+        .split(" ")
+        .map((item) => item[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
               : "U"}
-          </div>
-
-          <div className="min-w-0">
-            <div className="truncate text-sm font-medium">
+              </div>
+              
+              <div className="min-w-0">
+              <div className="truncate text-sm font-medium">
               {currentUser?.full_name || currentUser?.email || "User"}
-            </div>
-            <div className="truncate text-xs text-muted-foreground">
+              </div>
+              <div className="truncate text-xs text-muted-foreground">
               {currentUser?.role?.replace("_", " ")}
-            </div>
-          </div>
-        </div>
-
-        <Button variant="destructive" className="w-full" onClick={handleLogout}>
-          <FiLogOut className="mr-2" />
-          Logout
-        </Button>
-      </div> */}
+              </div>
+              </div>
+              </div>
+              
+              <Button variant="destructive" className="w-full" onClick={handleLogout}>
+              <FiLogOut className="mr-2" />
+              Logout
+              </Button>
+              </div> */}
     </aside>
+    </>
   );
 }

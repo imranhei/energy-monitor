@@ -109,12 +109,12 @@ export default function LoginPage() {
               {loading ? "Logging in..." : "Login"}
             </Button>
 
-            <p className="text-center text-sm">
+            {/* <p className="text-center text-sm">
               No account?{" "}
               <Link href="/register" className="font-medium underline">
                 Register
               </Link>
-            </p>
+            </p> */}
           </form>
         </CardContent>
       </Card>
