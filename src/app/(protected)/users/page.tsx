@@ -128,7 +128,7 @@ export default function UsersPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Users & Roles</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Users</h1>
             <p className="text-muted-foreground">
               Manage company users and permissions.
             </p>
